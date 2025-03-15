@@ -1,0 +1,55 @@
+version: '4.0'
+services:
+  currency-exchanges:
+    image: iamgangster/currency-exchange
+    mem_limit: 700m
+    ports:
+    - 8000:8000
+    networks:
+    - currency-network
+    depends_on:
+    - naming-server
+    environment:
+    - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE=http://naming-server:8761/eureka
+    - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT=http://zipkin-server:9411/api/v2/spans
+  naming-server:
+    image: iamgangster/naming-server:0.0.1-SNAPSHOT
+    mem_limit: 700m
+    ports:
+    - 8761:8761
+    networks:
+    - currency-network
+  currency-conversion:
+    image: iamgangster/currency-conversion
+    mem_limit: 700m
+    ports:
+    - 8100:8100
+    networks:
+    - currency-network
+    depends_on:
+    - naming-server
+    environment:
+    - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE=http://naming-server:8761/eureka 
+    - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT=http://zipkin-server:9411/api/v2/spans
+  api-gateway:
+    image: iamgangster/api-gateway
+    mem_limit: 700m
+    ports:
+    - 8765:8765
+    networks:
+    - currency-network
+    depends_on:
+    - naming-server
+    environment:
+    - EUREKA.CLIENT.SERVICEURL.DEFAULTZONE=http://naming-server:8761/eureka
+    - MANAGEMENT.ZIPKIN.TRACING.ENDPOINT=http://zipkin-server:9411/api/v2/spans
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 300m
+    ports:
+    - 9411:9411
+    networks:
+    - currency-network
+    restart: always
+networks:
+  currency-network: null
